@@ -8,11 +8,36 @@
 
 import Foundation
 
+enum Result <T>{
+    case Success(T)
+    case Error(String)
+}
+
 class NetworkingService {
     private init() {}
     
     static let instance = NetworkingService()
     
-    
+    func getDataWith(completion: @escaping (Result<[[String: AnyObject]]>) -> Void) {
+        // Create URL to fetch data from
+        guard let url = URL(string: fetchUrl) else { return }
+        
+        // Fetch JSON using URLSession's DataTask
+        URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard error == nil else { return }
+            guard let data = data else { return }
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: [.mutableContainers]) as? [String: AnyObject] {
+                    guard let filesJsonArray = json["files"] as? [[String: AnyObject]] else { return }
+                    DispatchQueue.main.async {
+                        completion(.Success(filesJsonArray))
+                    }
+                }
+            } catch let error {
+                print(error.localizedDescription)
+            }
+        }.resume()
+    }
     
 }

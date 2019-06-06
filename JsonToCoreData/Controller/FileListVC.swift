@@ -17,6 +17,11 @@ class FileListVC: UIViewController {
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
+        
+        // Get Data
+        NetworkingService.instance.getDataWith { (result) in
+            print(result)
+        }
     }
 
 
