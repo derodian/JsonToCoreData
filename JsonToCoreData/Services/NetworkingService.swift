@@ -20,24 +20,31 @@ class NetworkingService {
     
     func getDataWith(completion: @escaping (Result<[[String: AnyObject]]>) -> Void) {
         // Create URL to fetch data from
-        guard let url = URL(string: fetchUrl) else { return }
+        guard let url = URL(string: fetchUrl) else {
+            return completion(.Error("Invalid URL, cannot get data"))
+        }
         
         // Fetch JSON using URLSession's DataTask
         URLSession.shared.dataTask(with: url) { (data, response, error) in
-            guard error == nil else { return }
-            guard let data = data else { return }
+            guard error == nil else {
+                return completion(.Error(error!.localizedDescription))
+            }
+            guard let data = data else {
+                return completion(.Error(error?.localizedDescription ?? "There are no new files to get"))
+            }
             
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: [.mutableContainers]) as? [String: AnyObject] {
-                    guard let filesJsonArray = json["files"] as? [[String: AnyObject]] else { return }
+                    guard let filesJsonArray = json["files"] as? [[String: AnyObject]] else {
+                        return completion(.Error(error?.localizedDescription ?? "There are no new files to get"))
+                    }
                     DispatchQueue.main.async {
                         completion(.Success(filesJsonArray))
                     }
                 }
             } catch let error {
-                print(error.localizedDescription)
+                completion(.Error(error.localizedDescription))
             }
         }.resume()
     }
-    
 }

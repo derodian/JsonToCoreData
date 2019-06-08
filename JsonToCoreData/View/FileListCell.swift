@@ -30,9 +30,11 @@ class FileListCell: UITableViewCell {
         // Configure the view for the selected state
     }
     
-    func configure() {
-        fileTitleLabel.text = "File Name"
-        uploadDateLabel.text = "Jan 02, 2020"
+    func configureCellWith(file: File) {
+        DispatchQueue.main.async {
+            self.fileTitleLabel.text = file.name
+            self.uploadDateLabel.text = file.uploadDate
+        }
     }
 
     @IBAction func downloadTapped(_ sender: Any) {

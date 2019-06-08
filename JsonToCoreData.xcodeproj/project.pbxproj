@@ -16,6 +16,9 @@
 		00EEA01222A96FE0004319B0 /* FileListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01122A96FE0004319B0 /* FileListCell.swift */; };
 		00EEA01422A9706C004319B0 /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01322A9706C004319B0 /* Constant.swift */; };
 		00EEA01622A9750A004319B0 /* NetworkingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01522A9750A004319B0 /* NetworkingService.swift */; };
+		00EEA01922AB8851004319B0 /* File+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01722AB8851004319B0 /* File+CoreDataClass.swift */; };
+		00EEA01A22AB8851004319B0 /* File+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01822AB8851004319B0 /* File+CoreDataProperties.swift */; };
+		00EEA01C22AB895C004319B0 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00EEA01B22AB895C004319B0 /* CoreDataStack.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +33,9 @@
 		00EEA01122A96FE0004319B0 /* FileListCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListCell.swift; sourceTree = "<group>"; };
 		00EEA01322A9706C004319B0 /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		00EEA01522A9750A004319B0 /* NetworkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkingService.swift; sourceTree = "<group>"; };
+		00EEA01722AB8851004319B0 /* File+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "File+CoreDataClass.swift"; sourceTree = "<group>"; };
+		00EEA01822AB8851004319B0 /* File+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "File+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		00EEA01B22AB895C004319B0 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +102,8 @@
 		00EEA00D22A95FC7004319B0 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				00EEA01722AB8851004319B0 /* File+CoreDataClass.swift */,
+				00EEA01822AB8851004319B0 /* File+CoreDataProperties.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -104,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				00EEA01522A9750A004319B0 /* NetworkingService.swift */,
+				00EEA01B22AB895C004319B0 /* CoreDataStack.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -198,8 +207,11 @@
 				00EE9FF922A95F98004319B0 /* FileListVC.swift in Sources */,
 				00EEA01222A96FE0004319B0 /* FileListCell.swift in Sources */,
 				00EEA01422A9706C004319B0 /* Constant.swift in Sources */,
+				00EEA01C22AB895C004319B0 /* CoreDataStack.swift in Sources */,
+				00EEA01A22AB8851004319B0 /* File+CoreDataProperties.swift in Sources */,
 				00EEA01622A9750A004319B0 /* NetworkingService.swift in Sources */,
 				00EE9FFF22A95F98004319B0 /* JsonToCoreData.xcdatamodeld in Sources */,
+				00EEA01922AB8851004319B0 /* File+CoreDataClass.swift in Sources */,
 				00EE9FF722A95F98004319B0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
