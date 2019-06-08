@@ -32,8 +32,14 @@ extension FileListVC: UITableViewDataSource {
         return 8
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 80
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! FileListCell
+        
+//        cell.delegate = self
         
         return cell
     }
