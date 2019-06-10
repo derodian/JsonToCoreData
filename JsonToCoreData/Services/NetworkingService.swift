@@ -14,8 +14,8 @@ enum Result <T>{
 }
 
 class NetworkingService {
-    private init() {}
     
+    private init() {}
     static let instance = NetworkingService()
     
     func getDataWith(completion: @escaping (Result<[[String: AnyObject]]>) -> Void) {

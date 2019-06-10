@@ -13,6 +13,11 @@ class FileListVC: UIViewController {
 
     @IBOutlet weak var tableView: UITableView!
     
+    let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    func localFilePath(for url: URL) -> URL {
+        return documentsPath.appendingPathComponent(url.lastPathComponent)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -171,6 +176,45 @@ extension FileListVC: NSFetchedResultsControllerDelegate {
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         self.tableView.endUpdates()
+    }
+}
+
+extension FileListVC: FileListDelegate {
+    func pauseTapped(_ cell: FileListCell) {
+        if let indexPath = tableView.indexPath(for: cell) {
+            let file = fetchedResultController.object(at: indexPath) as! File
+            DownloadService.instance.pauseDownload(file)
+            reload(indexPath.row)
+        }
+    }
+    
+    func resumeTapped(_ cell: FileListCell) {
+        if let indexPath = tableView.indexPath(for: cell) {
+            let file = fetchedResultController.object(at: indexPath) as! File
+            DownloadService.instance.resumeDownload(file)
+            reload(indexPath.row)
+        }
+    }
+    
+    func cancelTapped(_ cell: FileListCell) {
+        if let indexPath = tableView.indexPath(for: cell) {
+            let file = fetchedResultController.object(at: indexPath) as! File
+            DownloadService.instance.cancelDownload(file)
+            reload(indexPath.row)
+        }
+    }
+    
+    func downloadTapped(_ cell: FileListCell) {
+        if let indexPath = tableView.indexPath(for: cell) {
+            let file = fetchedResultController.object(at: indexPath) as! File
+            DownloadService.instance.startDownload(file)
+            reload(indexPath.row)
+        }
+    }
+    
+    // Update filelist cell's buttons
+    func reload(_ row: Int) {
+        tableView.reloadRows(at: [IndexPath(row: row, section: 0)], with: .none)
     }
 }
 
