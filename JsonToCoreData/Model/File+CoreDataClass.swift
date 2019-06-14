@@ -2,7 +2,7 @@
 //  File+CoreDataClass.swift
 //  JsonToCoreData
 //
-//  Created by Googoo on 6/8/19.
+//  Created by Googoo on 6/10/19.
 //  Copyright © 2019 Derodian. All rights reserved.
 //
 //

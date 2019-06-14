@@ -40,20 +40,35 @@ class FileListCell: UITableViewCell {
         // Configure the view for the selected state
     }
     
-    func configureCellWith(file: File) {
+    func configureCellWith(file: File, download: Download?) {
         DispatchQueue.main.async {
             self.fileTitleLabel.text = file.name
-            self.uploadDateLabel.text = file.uploadDate
+            self.uploadDateLabel.text = String(file.index)
+            
+            // Show/hide download controls Pause/Resume, Cancel buttons, progress info
+            var showDownloadControls = false
+            
+            // Non-nil Download object means a download is in progress
+            if let download = download {
+                showDownloadControls = true
+                let title = download.isDownloading ? "Pause" : "Resume"
+                self.pauseButton.setTitle(title, for: .normal)
+                // Show something on progressLabel before getting update from delegate
+                self.progressLabel.text = download.isDownloading ? "Downloading..." : "Paused"
+            }
+            
+            // Show buttons if download is active
+            self.pauseButton.isHidden = !showDownloadControls
+            self.cancelButton.isHidden = !showDownloadControls
+            self.progressView.isHidden = !showDownloadControls
+            self.progressLabel.isHidden = !showDownloadControls
+            
+            // If the file is already downloaded, enable cell selection and hide the Download button
+            self.selectionStyle = file.downloaded ? UITableViewCell.SelectionStyle.gray : UITableViewCell.SelectionStyle.none
+            self.downloadButton.isHidden = file.downloaded || showDownloadControls
         }
         
-        // Show/hide download controls Pause/Resume, Cancel buttons, progress info
-        // TODO
-        // Non-nil Download object means a download is in progress
-        // TODO
         
-        // If the file is already downloaded, enable cell selection and hide the Download button
-        selectionStyle = file.downloaded ? UITableViewCell.SelectionStyle.gray : UITableViewCell.SelectionStyle.none
-        downloadButton.isHidden = file.downloaded
     }
 
     @IBAction func downloadTapped(_ sender: Any) {
@@ -72,4 +87,8 @@ class FileListCell: UITableViewCell {
         delegate?.cancelTapped(self)
     }
     
+    func updateDisplay(progress: Float, totalSize: String) {
+        progressView.progress = progress
+        progressLabel.text = String(format: "%.1f%% of %@", progress * 100, totalSize)
+    }
 }

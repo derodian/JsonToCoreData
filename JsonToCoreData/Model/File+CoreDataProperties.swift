@@ -2,7 +2,7 @@
 //  File+CoreDataProperties.swift
 //  JsonToCoreData
 //
-//  Created by Googoo on 6/8/19.
+//  Created by Googoo on 6/10/19.
 //  Copyright © 2019 Derodian. All rights reserved.
 //
 //
@@ -18,10 +18,10 @@ extension File {
     }
 
     @NSManaged public var downloaded: Bool
-    @NSManaged public var index: Int32
-    @NSManaged public var uploadDate: String?
-    @NSManaged public var fileUrl: String?
-    @NSManaged public var name: String?
+    @NSManaged public var fileUrl: URL?
     @NSManaged public var id: Int32
+    @NSManaged public var index: Int32
+    @NSManaged public var name: String?
+    @NSManaged public var uploadDate: String?
 
 }

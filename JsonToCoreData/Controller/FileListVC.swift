@@ -13,10 +13,18 @@ class FileListVC: UIViewController {
 
     @IBOutlet weak var tableView: UITableView!
     
+    var files: [File] = []
+    let downloadService = DownloadService()
+    
     let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     func localFilePath(for url: URL) -> URL {
         return documentsPath.appendingPathComponent(url.lastPathComponent)
     }
+    
+    lazy var downloadsSession: URLSession = {
+        let configuration = URLSessionConfiguration.background(withIdentifier: "bgSessionConfiguration")
+        return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +37,9 @@ class FileListVC: UIViewController {
         
 //        clearData()
         updateTableContent()
+        
+        // Set downloadsSession proerty of DownloadService
+        downloadService.downloadsSession = downloadsSession
     }
     
     func updateTableContent() {
@@ -66,14 +77,15 @@ class FileListVC: UIViewController {
     
     // Move this to Services or Helper if needed
     // Helper method that accepts a dictionary and returns a NSManagedObject
-    private func createFileEntityFrom(dictionary: [String: AnyObject]) -> NSManagedObject? {
+    private func createFileEntityFrom(dictionary: [String: AnyObject], index: Int) -> NSManagedObject? {
         let context = CoreDataStack.instance.persistentContainer.viewContext
         if let fileEntity = NSEntityDescription.insertNewObject(forEntityName: "File", into: context) as? File {
             fileEntity.id = dictionary["id"] as! Int32
             fileEntity.name = dictionary["name"] as? String
             fileEntity.uploadDate = dictionary["uploadDate"] as? String
-            fileEntity.fileUrl = dictionary["fileUrl"] as? String
-            fileEntity.index = fileEntity.id - 1
+            let url = dictionary["fileUrl"] as? String
+            fileEntity.fileUrl = URL(string: url!)
+            fileEntity.index = Int32(index)
             
             return fileEntity
         }
@@ -82,11 +94,13 @@ class FileListVC: UIViewController {
     
     // method to save files info into CoreData
     private func saveInCoreDataWith(array: [[String: AnyObject]]) {
-        _ = array.map{self.createFileEntityFrom(dictionary: $0)}
+//        _ = array.map{self.createFileEntityFrom(dictionary: $0)}
         // can also use 'for loop' instead of map function
-//        for dict in array {
-//            _ = self.createFileEntityFrom(dictionary: dict)
-//        }
+        var index = 0
+        for dict in array {
+            _ = self.createFileEntityFrom(dictionary: dict, index: index)
+            index += 1
+        }
         do {
             try CoreDataStack.instance.persistentContainer.viewContext.save()
         } catch let error {
@@ -97,7 +111,7 @@ class FileListVC: UIViewController {
     // Fetch data from CoreData
     lazy var fetchedResultController: NSFetchedResultsController<NSFetchRequestResult> = {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: File.self))
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "uploadDate", ascending: true)]
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "index", ascending: true)]
         let frc = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.instance.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         frc.delegate = self
         return frc
@@ -135,9 +149,12 @@ extension FileListVC: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! FileListCell
         
-//        cell.delegate = self
+        cell.delegate = self
         if let file = fetchedResultController.object(at: indexPath) as? File {
-            cell.configureCellWith(file: file)
+            if let fileUrl = file.fileUrl {
+                cell.configureCellWith(file: file, download: downloadService.activeDownloads[fileUrl])
+            }
+            
         }
         
         return cell
@@ -183,7 +200,7 @@ extension FileListVC: FileListDelegate {
     func pauseTapped(_ cell: FileListCell) {
         if let indexPath = tableView.indexPath(for: cell) {
             let file = fetchedResultController.object(at: indexPath) as! File
-            DownloadService.instance.pauseDownload(file)
+            downloadService.pauseDownload(file)
             reload(indexPath.row)
         }
     }
@@ -191,7 +208,7 @@ extension FileListVC: FileListDelegate {
     func resumeTapped(_ cell: FileListCell) {
         if let indexPath = tableView.indexPath(for: cell) {
             let file = fetchedResultController.object(at: indexPath) as! File
-            DownloadService.instance.resumeDownload(file)
+            downloadService.resumeDownload(file)
             reload(indexPath.row)
         }
     }
@@ -199,7 +216,7 @@ extension FileListVC: FileListDelegate {
     func cancelTapped(_ cell: FileListCell) {
         if let indexPath = tableView.indexPath(for: cell) {
             let file = fetchedResultController.object(at: indexPath) as! File
-            DownloadService.instance.cancelDownload(file)
+            downloadService.cancelDownload(file)
             reload(indexPath.row)
         }
     }
@@ -207,7 +224,7 @@ extension FileListVC: FileListDelegate {
     func downloadTapped(_ cell: FileListCell) {
         if let indexPath = tableView.indexPath(for: cell) {
             let file = fetchedResultController.object(at: indexPath) as! File
-            DownloadService.instance.startDownload(file)
+            downloadService.startDownload(file)
             reload(indexPath.row)
         }
     }
@@ -215,6 +232,72 @@ extension FileListVC: FileListDelegate {
     // Update filelist cell's buttons
     func reload(_ row: Int) {
         tableView.reloadRows(at: [IndexPath(row: row, section: 0)], with: .none)
+    }
+}
+
+extension FileListVC: URLSessionDownloadDelegate {
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        print("Finished downloading to \(location)")
+        // Extract original request URL from task and remove corresponding Download from that dictionary
+        guard let sourceURL = downloadTask.originalRequest?.url else { return }
+        let download = downloadService.activeDownloads[sourceURL]
+        downloadService.activeDownloads[sourceURL] = nil
+        
+        // Pass sourceURL to localFilepath helper method in FileListVC to genearte permanent filepath
+        let destinationURL = localFilePath(for: sourceURL)
+        print(destinationURL)
+        
+        // Move downloaded file from temp directory to desired destination directory and set downloaded property to true
+        let fileManager = FileManager.default
+        try? fileManager.removeItem(at: destinationURL)
+        do {
+            try fileManager.copyItem(at: location, to: destinationURL)
+            download?.file.downloaded = true
+        } catch let error {
+            print("Could not copy file to disk: \(error.localizedDescription)")
+        }
+        
+        // Reload selected cell using file's index property
+        if let index = download?.file.index {
+            // Set file's downloaded value to true to dismiss download button and make it selectable
+//            let file = fetchedResultController.object(at: index) as! File
+            let f = fetchedResultController.fetchedObjects![Int(index)] as! File
+            f.downloaded = true
+            DispatchQueue.main.async {
+                self.tableView.reloadRows(at: [IndexPath(row: Int(index), section: 0)], with: .none)
+                print("Cell updated...")
+            }
+        }
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        // Get url of downloadTask and use it to find matching Download
+        guard let url = downloadTask.originalRequest?.url, let download = downloadService.activeDownloads[url] else { return }
+        
+        // Calculate ration of total bytes written & expected to be written and save result to Download
+        download.progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
+        
+        // Format byte value to human-readable string
+        let totalSize = ByteCountFormatter.string(fromByteCount: totalBytesExpectedToWrite, countStyle: .file)
+        
+        // Find cell responsible for displaying the file and call cell's helper method to update progress
+        DispatchQueue.main.async {
+            if let fileListCell = self.tableView.cellForRow(at: IndexPath(row: Int(download.file.index), section: 0)) as? FileListCell {
+                fileListCell.updateDisplay(progress: download.progress, totalSize: totalSize)
+            }
+        }
+    }
+}
+
+extension FileListVC: URLSessionDelegate {
+    // Standard background session handler
+    func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+        DispatchQueue.main.async {
+            if let appDelegate = UIApplication.shared.delegate as? AppDelegate, let completionHandler = appDelegate.backgroundSessionCompletionHandler {
+                appDelegate.backgroundSessionCompletionHandler = nil
+                completionHandler()
+            }
+        }
     }
 }
 
