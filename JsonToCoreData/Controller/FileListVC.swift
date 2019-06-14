@@ -106,6 +106,9 @@ class FileListVC: UIViewController {
         } catch let error {
             print(error.localizedDescription)
         }
+        
+        // Need to check for present data before inserting to make sure old data is not overwritten
+        // TODO
     }
     
     // Fetch data from CoreData
